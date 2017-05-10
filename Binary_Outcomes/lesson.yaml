@@ -1,0 +1,131 @@
+- Class: meta
+  Course: Regression_Models_zb
+  Lesson: Binary_Outcomes
+  Author: Swirl Coders
+  Type: Standard
+  Organization: Johns Hopkins Bloomberg School of Public Health
+  Version: 2.2.0
+
+- Class: text
+  Output: "本节课的课见可以在 https://github.com/DataScienceSpecialization/courses 中找到，如果你有兴趣，可以下载该课件."
+
+- Class: text
+  Output: 我们常常碰到大量的问题，求解结果为二元输出，比如输赢，成功失败，存活死亡等，像这种输出被称为二元输出，也用0/1来表示.
+
+- Class: text
+  Output: 在该节中，我们会使用glm()内置的R函数来对二元问题进行建模. 同时我们也希望能够解释glm()函数的系数.首先来看odds,也叫优势比.
+
+- Class: text
+  Output: 假设在一个赛季的橄榄球比赛中，一个球队赢下了2/3的比赛，输掉了1/3的比赛，可见该球队赢球的概率相当高了.现在我们来对比赛进行下注，如果该球队输球，我赔付给你2$,如果该球队赢球，你赔付给我1$.
+
+- Class: mult_question  
+  Output: 现在如果该球队赢下了一个赛季的55%的比赛，那么我应该提供多大的odds?
+  AnswerChoices: 55 to 45; 11 to 9; 1.22222 to 1; Any of these
+  CorrectAnswer: Any of these
+  AnswerTests: omnitest()
+  Hint: 上面所有答案满足，因为他们代表了同一个比例.
+
+- Class: figure
+  Output: 假设我们想看该球队的odds和球队的进攻的关系.但是没有直接函数来表示这种关系，我们可以观察球队的得失分，胜负关系,并画出箱线图.
+  Figure: nevermore.R
+  FigureType: new
+
+- Class: mult_question  
+  Output: 通过观察我们发现球队得分越多，赢球的概率越大，球队输掉的比赛中有3/4是低于一定得分的.你能通过上面的观察发现这个得分应该是多少吗?
+  AnswerChoices: 23;18;30;40
+  CorrectAnswer: 23
+  AnswerTests: omnitest(correctVal='23')
+  Hint: 左边是"loss"，右边是"win". 
+
+- Class: figure
+  Output: 这里有9场比赛，球队得分低于23分，他们只赢了4场，因此我们可能认为如果球队得分低于23分，那么球队赢球的概率只有1/2.
+  Figure: purple_line.R
+  FigureType: add
+
+- Class: cmd_question
+  Output: 有11场比赛他们得分大于等于24分，他们全部都赢了.你可以通过查看数据，键入ravenData.
+  CorrectAnswer: ravenData
+  AnswerTests: ANY_of_exprs('ravenData', 'View(ravenData)')
+  Hint: 键入ravenData.
+
+- Class: figure
+  Output: 我们还发现在23分到28分中间这个分数段，中间存在一个很陡峭的转换，低于23分，赢了一半，24-28分，赢了3/4，高于28分，全部赢了.
+  Figure: graffiti_s.R
+  FigureType: new
+
+- Class: text
+  Output: 有了上面观察数据，我们希望找到一个关系函数来拟合这些观察数据，这种函数关系就是赢球的概率同得分的关系，log(p/(1-p)) = b0 + b1*score. log(p/(1-p))被称为logit, 现在的目标就是要找到b0 和 b1.
+
+- Class: cmd_question
+  Output: '们使用glm()函数去计算b0和b1，将数据集和变量传递给该函数，mdl <- glm(ravenWinNum ~ ravenScore, binomial, ravenData),ravenWinNum ~ ravenScore, 作为第一个参数，第二个参数指定为 binomial，第三个参数是数据集ravenData.'
+  CorrectAnswer: 'mdl <- glm(ravenWinNum ~ ravenScore, binomial, ravenData)'
+  AnswerTests: creates_glm_model('mdl <- glm(ravenWinNum ~ ravenScore, binomial, ravenData)')
+  Hint: 计算结果保存在mdl中， mdl <- glm(ravenWinNum ~ ravenScore, binomial, ravenData) or mdl <- glm(ravenWinNum ~ ravenScore, family=binomial, data=ravenData).
+
+- Class: figure
+  Output: 使用glm()估计的概率为图中黑色的曲线，可以看到该曲线更为平滑，从该曲线中，可以看到得分15分有50%的概率赢，得分28分有80%的概率赢.
+  Figure: glm_vs_graffiti.R
+  FigureType: new
+
+- Class: cmd_question
+  Output: 另外注意到当得分低于9分时，估计变得不那么准确，因为这个区域内没有数据.我们可以使用predict()预测得分0,3,6的赢球概率.键入lodds <- predict(mdl, data.frame(ravenScore=c(0, 3, 6))).
+  CorrectAnswer: 'lodds <- predict(mdl, data.frame(ravenScore=c(0, 3, 6)))'
+  AnswerTests: expr_creates_var('lodds');omnitest('lodds <- predict(mdl, data.frame(ravenScore=c(0, 3, 6)))')
+  Hint: 键入lodds <- predict(mdl, data.frame(ravenScore=c(0, 3, 6))) 预测得分0,3和6的赢球概率.
+
+- Class: cmd_question
+  Output: '计算predict()最后的计算结果是log odds，还需要转化为概率，键入exp(lodds)/(1+exp(lodds)).'
+  CorrectAnswer: 'exp(lodds)/(1+exp(lodds))'
+  AnswerTests: omnitest('exp(lodds)/(1+exp(lodds))')
+  Hint: 键入exp(lodds)/(1+exp(lodds))把log odds 转化为概率.
+
+- Class: cmd_question
+  Output: "尽管现在的模型还不十分准确，但是已经可以用来做简单的预测了.你可以查看模型的系数，键入summary(mdl).
+  CorrectAnswer: summary(mdl)
+  AnswerTests: omnitest('summary(mdl)')
+  Hint: 键入 summary(mdl).
+
+- Class: text
+  Output: "估计出来的系数正好是线性函数得分的系数，系数的正负反应了自变量和因变量的正负相关性.如果b0 + b1*score估计了log odds,那么exp(b0 + b1*score)=exp(b0)exp(b1*score) 估计 odds. 因此exp(b0)就是得分为0的odds，本例中为16/84."
+
+- Class: cmd_question
+  Output: "当然我需要分析模型的可信度，即置信水平，使用confind()函数计算95%置信水平的模型系数范围.键入exp(confint(mdl))."
+  CorrectAnswer: 'exp(confint(mdl))'
+  AnswerTests: omnitest('exp(confint(mdl))')
+  Hint: 键入exp(confint(mdl)).
+
+- Class: mult_question  
+  Output: "请计算得分为0时，赢球的odds的2.5%的置信水平?"
+  AnswerChoices: 0.005674966;0.996229662;2.5%
+  CorrectAnswer: '0.005674966'
+  AnswerTests: omnitest(correctVal= '0.005674966')
+  Hint: 结果十分小.
+
+- Class: mult_question  
+  Output: "结果几乎为0，也就是得分为0时，赢球的几乎不可信.现在观察exp(b1)的下限，得分每增加一分如何影响赢球的odds?
+  AnswerChoices: 略微下降;略微上升;上升30%
+  CorrectAnswer: 略微下降
+  AnswerTests: omnitest(correctVal= '略微下降')
+  Hint: 如果乘以0.996229662,会得到比原来略小的结果
+
+- Class: text
+  Output: "exp(b1)的下限表面赢球的odds会随着分数增加略微下降，这显然是不合理的.当然置信区间是基于大量样本估计的结果."
+
+- Class: cmd_question
+  Output: "线性回归最小化预测和观察的残差.如果另一个模型减小了残差的deviance，该模型也就相对比较重要了.由此引入了另一个模型，减小残差的方差，键入anova(mdl)."
+  CorrectAnswer: 'anova(mdl)'
+  AnswerTests: omnitest('anova(mdl)')
+  Hint: 键入 anova(mdl).
+
+- Class: cmd_question
+  Output: "结果是3.5398，表示得分的deviance, 即包括斜率的模型和只包含截距b0的模型的差别. 这个值是满足chi-square分布的，键入qchisq(0.95, 1),自由度为1."
+  CorrectAnswer: 'qchisq(0.95, 1)'
+  AnswerTests: ANY_of_exprs('qchisq(0.95, 1)', 'qchisq(.95, 1)')
+  Hint: Type qchisq(0.95, 1).
+
+- Class: text
+  Output: "如你所见，3.5398接近但是小于3.841459的95%分位数.可以发现当要达到70%的获胜概率时，得分再增加的影响就不在那么明显了."
+
+
+
+
